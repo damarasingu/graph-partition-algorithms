@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Path Partition Lab</title>
+  <style>
+    :root { --ink:#17251f; --muted:#68776f; --paper:#f6f7f1; --panel:#fffef9; --line:#dce3d9; --green:#0f6b52; --lime:#cfe85b; --orange:#e9894c; --blue:#5085a8; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:radial-gradient(circle at 12% 5%, #e7f0cf 0 18%, transparent 42%), linear-gradient(130deg,#f6f7f1,#e9f0ed); font:15px/1.45 Georgia, 'Times New Roman', serif; }
+    .shell { max-width:1240px; margin:auto; padding:32px 24px 48px; }
+    header { display:flex; justify-content:space-between; align-items:end; gap:24px; margin-bottom:24px; }
+    h1 { margin:0; max-width:600px; font-size:clamp(2.3rem,5vw,4.7rem); line-height:.93; letter-spacing:-.04em; font-weight:500; }
+    .kicker { color:var(--green); font:700 12px/1.2 'Trebuchet MS',sans-serif; text-transform:uppercase; letter-spacing:.16em; margin-bottom:12px; }
+    .lede { max-width:330px; color:var(--muted); margin:0 0 4px; }
+    .layout { display:grid; grid-template-columns:290px 1fr; gap:18px; align-items:start; }
+    .panel { background:color-mix(in srgb,var(--panel) 90%,transparent); border:1px solid var(--line); border-radius:8px; box-shadow:0 12px 34px #25493610; }
+    .controls { padding:20px; position:sticky; top:16px; }
+    label { display:block; color:var(--muted); font:700 12px 'Trebuchet MS',sans-serif; text-transform:uppercase; letter-spacing:.08em; margin:17px 0 7px; }
+    textarea, input[type=number] { width:100%; border:1px solid var(--line); border-radius:5px; background:#f8faf3; color:var(--ink); padding:10px; font:15px 'Courier New',monospace; }
+    textarea { min-height:104px; resize:vertical; }
+    input[type=range] { width:100%; accent-color:var(--green); }
+    .range-row { display:flex; align-items:center; gap:12px; } .range-row output { min-width:34px; font:bold 15px 'Courier New',monospace; }
+    button { width:100%; border:0; border-radius:5px; padding:12px 14px; margin-top:18px; background:var(--green); color:white; cursor:pointer; font:bold 13px 'Trebuchet MS',sans-serif; text-transform:uppercase; letter-spacing:.08em; } button:hover { background:#0a503e; }
+    .content { display:grid; gap:18px; }
+    .hero-chart { padding:20px; overflow:hidden; } .chart-title { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:12px; } h2 { font-size:20px; margin:0; font-weight:500; } .meta { color:var(--muted); font:12px 'Courier New',monospace; }
+    svg { display:block; width:100%; height:auto; min-height:230px; background:#fbfcf6; border:1px solid var(--line); border-radius:5px; }
+    .cards { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; } .result { padding:18px; } .result.accent { border-top:4px solid var(--green); } .result.baseline { border-top:4px solid var(--orange); }
+    .result-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; } .badge { border-radius:99px; padding:4px 8px; background:#e8f0c9; color:var(--green); font:700 11px 'Trebuchet MS',sans-serif; } .baseline .badge { background:#f9e3d2; color:#9d4c20; }
+    .metric { font:28px 'Courier New',monospace; } .metric small { color:var(--muted); font:12px 'Trebuchet MS',sans-serif; }
+    .segments { display:grid; gap:8px; margin-top:16px; } .segment { display:grid; grid-template-columns:54px 1fr 70px; gap:10px; align-items:center; font:12px 'Courier New',monospace; } .segment-bar { height:12px; background:#e7eee4; border-radius:2px; overflow:hidden; } .segment-fill { height:100%; background:var(--green); } .baseline .segment-fill { background:var(--orange); }
+    .probabilities { padding:18px; } .prob-row { display:grid; grid-template-columns:74px 1fr 52px; gap:10px; align-items:center; margin:8px 0; font:12px 'Courier New',monospace; } .prob-bar { height:9px; background:#e8eee6; border-radius:99px; overflow:hidden; } .prob-fill { height:100%; background:var(--blue); }
+    .legend { color:var(--muted); font:12px 'Trebuchet MS',sans-serif; } .error { color:#a83a2a; padding:10px 0; font-family:'Trebuchet MS',sans-serif; }
+    @media (max-width:760px) { .shell{padding:22px 14px 34px} header{display:block} .lede{margin-top:18px} .layout{display:block} .controls{position:static; margin-bottom:18px} .cards{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header><div><div class="kicker">Inference-driven design / live model</div><h1>See the path<br>choose its cuts.</h1></div><p class="lede">Explore how load balance and local discontinuities compete when the dynamic program partitions a weighted path.</p></header>
+    <section class="layout">
+      <aside class="panel controls">
+        <label for="weights">Vertex weights</label>
+        <textarea id="weights" spellcheck="false">2.0, 3.5, 1.2, 7.5, 6.8, 2.4, 2.8, 8.2, 3.1, 2.0, 5.5, 4.0</textarea>
+        <label for="parts">Number of regions</label>
+        <input id="parts" type="number" min="1" max="12" value="3">
+        <label for="smoothness">Inference smoothness</label>
+        <div class="range-row"><input id="smoothness" type="range" min="0" max="1.5" step="0.05" value="0.35"><output id="smoothness-value">0.35</output></div>
+        <button id="run">Repartition path</button>
+        <p class="legend">Green cuts are selected by the inference-guided DP. Orange cuts show the greedy baseline.</p>
+        <div id="error" class="error" role="alert"></div>
+      </aside>
+      <div class="content">
+        <section class="panel hero-chart"><div class="chart-title"><h2>Graph and partition map</h2><span id="summary" class="meta"></span></div><svg id="path-chart" viewBox="0 0 900 290" role="img" aria-label="Weighted graph path with highlighted partitions"></svg><div class="legend">Each circle is a vertex; links are graph edges. Green regions and lines are the dynamic-program partition. Orange dashed lines are greedy boundaries.</div></section>
+        <div class="cards"><section class="panel result accent"><div class="result-head"><h2>Guided dynamic program</h2><span class="badge">SELECTED</span></div><div><span id="guided-cost" class="metric">--</span> <small>objective cost</small></div><div id="guided-segments" class="segments"></div></section><section class="panel result baseline"><div class="result-head"><h2>Greedy baseline</h2><span class="badge">BASELINE</span></div><div><span id="greedy-cost" class="metric">--</span> <small>load cost</small></div><div id="greedy-segments" class="segments"></div></section></div>
+        <section class="panel probabilities"><div class="chart-title"><h2>Boundary evidence</h2><span class="legend">posterior-like probability from local demand change</span></div><div id="probabilities"></div></section>
+      </div>
+    </section>
+  </main>
+<script>
+const $ = id => document.getElementById(id);
+$('smoothness').addEventListener('input', () => $('smoothness-value').textContent = Number($('smoothness').value).toFixed(2));
+$('run').addEventListener('click', run);
+function parseWeights() { return $('weights').value.split(/[,\s]+/).filter(Boolean).map(Number); }
+async function run() {
+  $('error').textContent = '';
+  try {
+    const response = await fetch('/api/partition', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({weights:parseWeights(), parts:Number($('parts').value), smoothness:Number($('smoothness').value)}) });
+    const data = await response.json(); if (!response.ok) throw new Error(data.error);
+    render(data);
+  } catch (error) { $('error').textContent = error.message; }
+}
+function render(data) {
+  $('summary').textContent = `${data.weights.length} vertices · target load ${data.target}`;
+  $('guided-cost').textContent = data.guided.cost.toFixed(4); $('greedy-cost').textContent = data.greedy.cost.toFixed(4);
+  drawPath(data); renderSegments('guided-segments', data.guided, data.target, false); renderSegments('greedy-segments', data.greedy, data.target, true); renderProbabilities(data.probabilities);
+}
+function drawPath(data) {
+  const svg = $('path-chart'), width = 900, y = 150, left = 42, gap = (width-left*2)/(data.weights.length-1), colors = ['#dceba2', '#c9e1d3', '#dce1f0', '#f3dfae', '#d7e6c4'];
+  let html = '';
+  let start = 0;
+  data.guided.segments.forEach((segment, index) => { const x1 = left + start * gap - 20, x2 = left + (segment.end - 1) * gap + 20; html += `<rect x="${x1}" y="42" width="${x2-x1}" height="206" rx="8" fill="${colors[index % colors.length]}" opacity=".58"/><text x="${(x1+x2)/2}" y="66" text-anchor="middle" fill="#0f6b52" font-size="12" font-weight="bold">PARTITION ${index+1}</text>`; start = segment.end; });
+  data.weights.forEach((weight,index) => { const x=left+index*gap; if (index < data.weights.length - 1) html += `<line x1="${x}" y1="${y}" x2="${x+gap}" y2="${y}" stroke="#78948a" stroke-width="5"/><text x="${x+gap/2}" y="${y-12}" text-anchor="middle" fill="#68776f" font-size="10">edge ${index+1}</text>`; });
+  data.weights.forEach((weight,index) => { const x=left+index*gap, cut=data.guided.cuts.includes(index+1), greedy=data.greedy.cuts.includes(index+1), boundary=x+gap/2; html += `<circle cx="${x}" cy="${y}" r="20" fill="#fffef9" stroke="#17251f" stroke-width="3"/><text x="${x}" y="${y+4}" text-anchor="middle" fill="#17251f" font-size="12" font-weight="bold">v${index+1}</text><text x="${x}" y="${y+43}" text-anchor="middle" fill="#17251f" font-size="12">load ${weight}</text>`; if(cut) html += `<line x1="${boundary}" y1="34" x2="${boundary}" y2="260" stroke="#0f6b52" stroke-width="4"/><text x="${boundary}" y="27" text-anchor="middle" fill="#0f6b52" font-size="11" font-weight="bold">DP CUT</text>`; if(greedy && !cut) html += `<line x1="${boundary}" y1="34" x2="${boundary}" y2="260" stroke="#e9894c" stroke-width="3" stroke-dasharray="7 5"/><text x="${boundary}" y="27" text-anchor="middle" fill="#9d4c20" font-size="11">GREEDY CUT</text>`; }); svg.innerHTML=html;
+}
+function renderSegments(id, result, target, baseline) { $(id).innerHTML=result.segments.map(segment => `<div class="segment"><span>R${segment.id} · ${segment.start+1}-${segment.end}</span><div class="segment-bar"><div class="segment-fill" style="width:${Math.min(100,segment.load/target*100)}%"></div></div><span>${segment.load.toFixed(2)} / ${target}</span></div>`).join(''); }
+function renderProbabilities(probabilities) { $('probabilities').innerHTML=probabilities.map((probability,index) => `<div class="prob-row"><span>edge ${index+1}|${index+2}</span><div class="prob-bar"><div class="prob-fill" style="width:${probability*100}%"></div></div><span>${(probability*100).toFixed(1)}%</span></div>`).join(''); }
+run();
+</script>
+</body>
+</html>
