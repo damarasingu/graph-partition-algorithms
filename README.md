@@ -39,3 +39,24 @@ Replace “quantify path-partitioning speedups” with an exact percentage only 
 ## Interactive visualizer
 
 Run `python visualizer.py`, then open `http://127.0.0.1:8765`. The browser view renders the weighted path, guided DP cuts, greedy baseline cuts, segment loads, and posterior-like boundary probabilities. Edit the weights, number of regions, or inference smoothness and select **Repartition path** to see the model update live.
+
+## Deploy on Vercel
+
+This repository includes a Vercel Python serverless function in `api/partition.py`, so the interactive page can be deployed without running a local server.
+
+### From the Vercel dashboard
+
+1. Open [vercel.com/new](https://vercel.com/new) and import `damarasingu/graph-partition-algorithms` from GitHub.
+2. Leave the framework preset as **Other** and keep the project root as `/`.
+3. Select **Deploy**. No environment variables or build command are required.
+
+### From the CLI
+
+```powershell
+npm install -g vercel
+vercel login
+vercel
+vercel --prod
+```
+
+Vercel serves `/visualizer.html` at the project root through `vercel.json` and routes `/api/partition` to the Python function.
