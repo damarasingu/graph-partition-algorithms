@@ -2,6 +2,12 @@
 
 An inference-guided design project for partitioning a weighted path into contiguous regions. It combines an exact dynamic-programming optimizer with a small Bayesian/Markov boundary model that turns local discontinuities into soft cut penalties.
 
+## Live demo
+
+Try the interactive graph visualizer: [Path Partition Lab](https://graph-partition-algo.vercel.app/)
+
+Adjust vertex weights, the number of regions, and inference smoothness to see how the graph is partitioned in real time.
+
 ## Why this is resume-worthy
 
 - Designed a dependency-free dynamic program with `O(k n^2)` time and `O(k n)` recoverable state for contiguous path partitioning.
@@ -43,6 +49,8 @@ Run `python visualizer.py`, then open `http://127.0.0.1:8765`. The browser view 
 ## Deploy on Vercel
 
 This repository includes a Vercel Python serverless function in `api/partition.py`, so the interactive page can be deployed without running a local server.
+
+Production deployment: [graph-partition-algo.vercel.app](https://graph-partition-algo.vercel.app/)
 
 ### From the Vercel dashboard
 
